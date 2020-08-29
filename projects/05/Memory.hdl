@@ -1,0 +1,18 @@
+ CHIP Memory {
+    IN in[16], load, address[15];
+    OUT out[16];
+
+    PARTS:
+
+	DMux(in=load,sel=address[14],a=SelRam,b=SelScr);
+
+	//if load was '1', writing happens to selected unit.
+	RAM16K(in=in, load=SelRam, address=address[0..13] , out=outRAM);
+	Screen(in=in,load=SelScr,address=address[0..12],out=outScreen);
+	Keyboard(out=outKBD);
+
+	//output from ram units to single 16 bit out line
+	Mux4Way16(a=outRAM,b=outRAM,c=outScreen,d=outKBD,sel=address[13..14],out=out);
+	
+}
+

@@ -1,0 +1,42 @@
+CHIP ALU {
+    IN  
+        x[16], y[16],  // 16-bit inputs        
+        zx, // zero the x input?
+        nx, // negate the x input?
+        zy, // zero the y input?
+        ny, // negate the y input?
+        f,  // compute out = x + y (if 1) or x & y (if 0)
+        no; // negate the out output?
+
+    OUT 
+        out[16], // 16-bit output
+        zr, // 1 if (out == 0), 0 otherwise
+        ng; // 1 if (out < 0),  0 otherwise
+
+    PARTS:
+Mux16(a=x,b=false,sel=zx,out=zxout);
+Not16(in=zxout,out=notx);
+Mux16(a=zxout,b=notx,sel=nx,out=znxout);
+
+Mux16(a=y,b=false,sel=zy,out=zyout);
+Not16(in=zyout,out=noty);
+Mux16(a=zyout,b=noty,sel=ny,out=znyout);
+
+And16(a=znxout,b=znyout,out=xandy);
+Add16(a=znxout,b=znyout,out=xaddy);
+Mux16(a=xandy,b=xaddy,sel=f,out=xFy);
+
+Not16(in=xFy,out=notxFy);
+Mux16(a=xFy,b=notxFy,sel=no,out[0..7]=outlsb,out[8..14]=outmsb,out[15]=sign);
+Mux16(a[0..7]=outlsb,a[8..14]=outmsb,a[15]=sign,b=true,sel=false,out=out);
+
+//ng logic
+Or(a=sign,b=false,out=ng);
+
+//zr logic
+Or8Way(in=outlsb,out=temp1);
+Or8Way(in[0..6]=outmsb,in[7]=sign,out=temp2);
+Or(a=temp1,b=temp2,out=temp);
+Not(in=temp,out=zr);
+
+}
